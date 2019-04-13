@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="理解适配器模式之前,可以先来看一下转换插头,两者的思想其实是一样的  就是上图中的这个样子,当你出国旅行的时候,可能会用到这样一个东西,你的笔记本电脑直接插到国外的插座上是插不进去的,需要用一个转换插头,先让转换插头插到插座上,然后你的笔记本电脑插到转换插头上,这样就解决了问题 而这个转换插头,就是我们今天要说的适配器模式,在现实中的一个实现 适配器模式的定义: 适配器模式(Adapter):将一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://yoursite.com/2019/04/13/适配器模式和转换插头/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="理解适配器模式之前,可以先来看一下转换插头,两者的思想其实是一样的  就是上图中的这个样子,当你出国旅行的时候,可能会用到这样一个东西,你的笔记本电脑直接插到国外的插座上是插不进去的,需要用一个转换插头,先让转换插头插到插座上,然后你的笔记本电脑插到转换插头上,这样就解决了问题 而这个转换插头,就是我们今天要说的适配器模式,在现实中的一个实现 适配器模式的定义: 适配器模式(Adapter):将一">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=01a5193be7f81a4c323fe49bb6430b3c/4034970a304e251f985c4fb7ab86c9177e3e53d1.jpg">
+<meta property="og:image" content="https://img2018.cnblogs.com/blog/407044/201810/407044-20181022121030666-1294936988.jpg">
+<meta property="og:updated_time" content="2018-10-22T04:40:51.975Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hexo">
+<meta name="twitter:description" content="理解适配器模式之前,可以先来看一下转换插头,两者的思想其实是一样的  就是上图中的这个样子,当你出国旅行的时候,可能会用到这样一个东西,你的笔记本电脑直接插到国外的插座上是插不进去的,需要用一个转换插头,先让转换插头插到插座上,然后你的笔记本电脑插到转换插头上,这样就解决了问题 而这个转换插头,就是我们今天要说的适配器模式,在现实中的一个实现 适配器模式的定义: 适配器模式(Adapter):将一">
+<meta name="twitter:image" content="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=01a5193be7f81a4c323fe49bb6430b3c/4034970a304e251f985c4fb7ab86c9177e3e53d1.jpg">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>Hexo</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- persian styles -->
+    
+      <link rel="stylesheet" href="/css/rtl.css">
+    
+    <!-- rss -->
+    
+    
+</head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Inici</a></li>
+         
+          <li><a href="/about/">Qui som</a></li>
+         
+          <li><a href="/archives/">Articles</a></li>
+         
+          <li><a href="/projects_url">Projectes</a></li>
+        
+      </ul>
+    </span>
+    <br>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" href="/2019/04/12/hello-world/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Post Anterior</span>
+      <span id="i-next" class="info" style="display:none;">Post Següent</span>
+      <span id="i-top" class="info" style="display:none;">Adalt</span>
+      <span id="i-share" class="info" style="display:none;">Compartir Post</span>
+    </span>
+    <br>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2019/04/13/适配器模式和转换插头/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&text="><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&title="><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&is_video=false&description="><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=&body=Check out this article: http://yoursite.com/2019/04/13/适配器模式和转换插头/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&title="><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&title="><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&title="><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&title="><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&name=&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Hexo</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-04-12T16:10:33.715Z" itemprop="datePublished">2019-04-13</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p>理解适配器模式之前,可以先来看一下转换插头,两者的思想其实是一样的</p>
+<p><img src="https://gss1.bdstatic.com/-vo3dSag_xI4khGkpoWK1HF6hhy/baike/c0%3Dbaike80%2C5%2C5%2C80%2C26/sign=01a5193be7f81a4c323fe49bb6430b3c/4034970a304e251f985c4fb7ab86c9177e3e53d1.jpg" alt="转换插头"></p>
+<p>就是上图中的这个样子,当你出国旅行的时候,可能会用到这样一个东西,你的笔记本电脑直接插到国外的插座上是插不进去的,需要用一个转换插头,先让转换插头插到插座上,然后你的笔记本电脑插到转换插头上,这样就解决了问题</p>
+<p>而这个转换插头,就是我们今天要说的适配器模式,在现实中的一个实现</p>
+<p>适配器模式的定义:</p>
+<p>适配器模式(Adapter):将一个类的接口,转换成客户希望的另外一个接口,Adapter模式使得原本由于接口不兼容而不能一起工作的类,可以一起工作</p>
+<p>适配器模式的类图:</p>
+<p><img src="https://img2018.cnblogs.com/blog/407044/201810/407044-20181022121030666-1294936988.jpg" alt></p>
+<p>适配器模式的应用场景:</p>
+<p>首先,咱们有一个现成的类,完成了一些特定的功能,现在要复用这个旧的类的功能,让它实现新的接口,我们定义一个新的类,让这个新的类实现新的接口,实现的方法就是调用旧的类</p>
+<p>这样就实现了适配器</p>
+<p>依照上边的类图,我们可以写出适配器模式的示例代码:</p>
+<pre><code>public interface Target {
+    void doSomething();
+}
+
+
+public class Adaptee {
+
+    public void service(){
+        System.out.println(&quot;我是原始的类&quot;);
+    }
+}    
+
+
+public class Adapter implements Target {
+    public Adaptee adaptee;
+
+    @Override
+    public void doSomething() {
+        adaptee.service();
+    }
+
+    public Adapter(Adaptee adaptee) {
+        this.adaptee = adaptee;
+    }
+}
+
+
+
+public class AdapterClient {
+    public static void main(String[] args) {
+        Target target = new Adapter(new Adaptee());
+        target.doSomething();
+    }
+}   
+</code></pre>
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Inici</a></li>
+         
+          <li><a href="/about/">Qui som</a></li>
+         
+          <li><a href="/archives/">Articles</a></li>
+         
+          <li><a href="/projects_url">Projectes</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2019/04/13/适配器模式和转换插头/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&text="><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&title="><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&is_video=false&description="><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=&body=Check out this article: http://yoursite.com/2019/04/13/适配器模式和转换插头/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&title="><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&title="><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&title="><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&title="><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2019/04/13/适配器模式和转换插头/&name=&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menú</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Compartir</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Cap amunt</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2019 John Doe
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Inici</a></li>
+         
+          <li><a href="/about/">Qui som</a></li>
+         
+          <li><a href="/archives/">Articles</a></li>
+         
+          <li><a href="/projects_url">Projectes</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+    <!-- jquery -->
+<script src="/lib/jquery/jquery.min.js"></script>
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+<script src="/js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>

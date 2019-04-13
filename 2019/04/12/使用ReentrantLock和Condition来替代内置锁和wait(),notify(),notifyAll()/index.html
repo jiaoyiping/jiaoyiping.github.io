@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="使用ReentrantLock可以替代内置锁,当使用内置锁的时候,我们可以使用wait() nitify()和notifyAll()来控制线程之间的协作,那么,当我们使用ReentrantLock的时候,我们怎么来处理线程之间的写作呢?JDK5.0为我们提供了Condition对象来替代内置锁的 wait(),notify()和notifyAll()方法 内置锁的话,就只能有一个等待队列,所有的在">
+<meta name="keywords" content="java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()">
+<meta property="og:url" content="http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="使用ReentrantLock可以替代内置锁,当使用内置锁的时候,我们可以使用wait() nitify()和notifyAll()来控制线程之间的协作,那么,当我们使用ReentrantLock的时候,我们怎么来处理线程之间的写作呢?JDK5.0为我们提供了Condition对象来替代内置锁的 wait(),notify()和notifyAll()方法 内置锁的话,就只能有一个等待队列,所有的在">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https://img2018.cnblogs.com/blog/407044/201904/407044-20190412231507731-1210333974.jpg">
+<meta property="og:updated_time" content="2019-04-12T23:11:53.416Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()">
+<meta name="twitter:description" content="使用ReentrantLock可以替代内置锁,当使用内置锁的时候,我们可以使用wait() nitify()和notifyAll()来控制线程之间的协作,那么,当我们使用ReentrantLock的时候,我们怎么来处理线程之间的写作呢?JDK5.0为我们提供了Condition对象来替代内置锁的 wait(),notify()和notifyAll()方法 内置锁的话,就只能有一个等待队列,所有的在">
+<meta name="twitter:image" content="https://img2018.cnblogs.com/blog/407044/201904/407044-20190412231507731-1210333974.jpg">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()</title>
+    <!-- styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- persian styles -->
+    
+      <link rel="stylesheet" href="/css/rtl.css">
+    
+    <!-- rss -->
+    
+    
+</head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Inici</a></li>
+         
+          <li><a href="/about/">Qui som</a></li>
+         
+          <li><a href="/archives/">Articles</a></li>
+         
+          <li><a href="/projects_url">Projectes</a></li>
+        
+      </ul>
+    </span>
+    <br>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2019/04/12/hello-world/"><i class="fas fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Post Anterior</span>
+      <span id="i-next" class="info" style="display:none;">Post Següent</span>
+      <span id="i-top" class="info" style="display:none;">Adalt</span>
+      <span id="i-share" class="info" style="display:none;">Compartir Post</span>
+    </span>
+    <br>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&text=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&title=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&is_video=false&description=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()&body=Check out this article: http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&title=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&title=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&title=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&title=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&name=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#使用ReentrantLock可以替代内置锁-当使用内置锁的时候-我们可以使用wait-nitify-和notifyAll-来控制线程之间的协作-那么-当我们使用ReentrantLock的时候-我们怎么来处理线程之间的写作呢"><span class="toc-number">1.</span> <span class="toc-text">使用ReentrantLock可以替代内置锁,当使用内置锁的时候,我们可以使用wait() nitify()和notifyAll()来控制线程之间的协作,那么,当我们使用ReentrantLock的时候,我们怎么来处理线程之间的写作呢?</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#JDK5-0为我们提供了Condition对象来替代内置锁的-wait-notify-和notifyAll-方法"><span class="toc-number">2.</span> <span class="toc-text">JDK5.0为我们提供了Condition对象来替代内置锁的 wait(),notify()和notifyAll()方法</span></a></li></ol><li class="toc-item toc-level-3"><a class="toc-link" href="#来自JDK文档中的示例-我稍加改造-加上了main方法和一些日志"><span class="toc-number"></span> <span class="toc-text">来自JDK文档中的示例(我稍加改造,加上了main方法和一些日志):</span></a>
+    </li></div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">Hexo</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-04-12T15:22:02.000Z" itemprop="datePublished">2019-04-12</time>
+        
+      
+    </div>
+
+
+      
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link" href="/tags/java/">java</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h5 id="使用ReentrantLock可以替代内置锁-当使用内置锁的时候-我们可以使用wait-nitify-和notifyAll-来控制线程之间的协作-那么-当我们使用ReentrantLock的时候-我们怎么来处理线程之间的写作呢"><a href="#使用ReentrantLock可以替代内置锁-当使用内置锁的时候-我们可以使用wait-nitify-和notifyAll-来控制线程之间的协作-那么-当我们使用ReentrantLock的时候-我们怎么来处理线程之间的写作呢" class="headerlink" title="使用ReentrantLock可以替代内置锁,当使用内置锁的时候,我们可以使用wait() nitify()和notifyAll()来控制线程之间的协作,那么,当我们使用ReentrantLock的时候,我们怎么来处理线程之间的写作呢?"></a>使用ReentrantLock可以替代内置锁,当使用内置锁的时候,我们可以使用wait() nitify()和notifyAll()来控制线程之间的协作,那么,当我们使用ReentrantLock的时候,我们怎么来处理线程之间的写作呢?</h5><h5 id="JDK5-0为我们提供了Condition对象来替代内置锁的-wait-notify-和notifyAll-方法"><a href="#JDK5-0为我们提供了Condition对象来替代内置锁的-wait-notify-和notifyAll-方法" class="headerlink" title="JDK5.0为我们提供了Condition对象来替代内置锁的 wait(),notify()和notifyAll()方法"></a>JDK5.0为我们提供了Condition对象来替代内置锁的 wait(),notify()和notifyAll()方法</h5><p><img src="https://img2018.cnblogs.com/blog/407044/201904/407044-20190412231507731-1210333974.jpg" alt></p>
+<p>内置锁的话,就只能有一个等待队列,所有的在某个对象上执行wait()方法的线程都会被加入到该对象的等待队列中去(线程会被挂起),需要其他的线程在同一个对象上调用notify()或者是notifyAll()方法来唤醒等待队列中的线程</p>
+<p>而使用Condition的话,可以使用不同的等待队列,只需要使用lock.newCondition()即可定义一个Condition对象,每一个Condition对象上都会有一个等待队列(底层使用AQS),调用某个Condition对象的await()方法,就可以把当前线程加入到这个Condition对象的等待队列上</p>
+<p>其他的线程调用同一个Condition对象的sinal()或者是signalAll()方法则会唤醒等待队列上的线程,使其能够继续执行</p>
+<p>我们以一个现实中的例子来说明若何使用ReentrantLock和Condition如何替代synchronized和wait(),notify(),notifyAll():</p>
+<p>我们模拟两个线程,一个线程执行登录操作,该登录操作会阻塞,然后等待另外一个线程将其唤醒(类似扫描登录的场景,页面会阻塞,等待扫码和确认,然后页面才会跳转)</p>
+<p>首先是使用内置锁的例子:</p>
+<pre><code>package com.jiaoyiping.baseproject.condition;
+
+import java.io.Serializable;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+
+/**
+ * Created with Intellij IDEA
+ *
+ * @author: jiaoyiping
+ * Mail: jiaoyiping@gmail.com
+ * Date: 2019/04/12
+ * Time: 15:29
+ * To change this template use File | Settings | Editor | File and Code Templates
+ */
+
+//使用内置锁来实现的等待/通知模型
+
+public class LoginServiceUseInnerLock {
+    private ConcurrentHashMap&lt;String, Result&gt; loginMap = new ConcurrentHashMap&lt;&gt;();
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        LoginServiceUseInnerLock loginService = new LoginServiceUseInnerLock();
+        String uuid = UUID.randomUUID().toString();
+        System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 使用的UUID是: &quot; + uuid);
+        new Thread(() -&gt; {
+            loginService.login(uuid, 20_000);
+            countDownLatch.countDown();
+        }, &quot;登录线程&quot;).start();
+        Thread.sleep(2_000);
+        new Thread(() -&gt; {
+            loginService.confirm(uuid);
+            countDownLatch.countDown();
+        }, &quot;确认线程&quot;).start();
+        countDownLatch.await();
+        System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 两个线程都执行完毕了&quot;);
+
+    }
+
+
+    public void login(String code, int timeout) {
+        Result result = new Result();
+        result.setMessage(&quot;超时&quot;);
+        loginMap.put(code, result);
+        synchronized (result) {
+            try {
+                //超时的话,会自动返回,程序继续
+                System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 登录线程挂起&quot;);
+                result.wait(timeout);
+                System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 登录线程继续执行,得到的结果是:&quot; + result.getMessage());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                loginMap.remove(code);
+            }
+        }
+    }
+
+    public void confirm(String code) {
+        assert code != null;
+        Result result = loginMap.get(code);
+        if (result == null) {
+            System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 请求不存在或者已经过期&quot;);
+            return;
+        }
+        result.setMessage(&quot;成功&quot;);
+        synchronized (result) {
+            //唤醒等待队列上的线程
+            System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 确认线程开始唤醒阻塞的线程&quot;);
+            result.notify();
+        }
+
+    }
+
+    class Result implements Serializable {
+        private static final long serialVersionUID = -4279280559711939661L;
+        String message;
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public Result() {
+        }
+        public Result(String message) {
+            this.message = message;
+        }
+    }
+</code></pre><p>使用内置锁的时候,我们把random生成的key和一个自己定义的Result对象放置到ConcurrentHashMap中去,登录线程调用 Result对象的wait(timeout) 方法将当前线程挂起,并加入到Result对象的等待队列上去</p>
+<p>确认线程根据key值,找到对应的Result对象,设置好message,然后调用Result对象的notify()方法唤醒等待队列上的线程,登录线程得以继续执行</p>
+<p>那我们如何使用ReentrantLock和Condition来重写这个例子:</p>
+<pre><code>package com.jiaoyiping.baseproject.condition;
+
+import java.io.Serializable;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+
+/**
+ * Created with Intellij IDEA
+ *
+ * @author: jiaoyiping
+ * Mail: jiaoyiping@gmail.com
+ * Date: 2019/04/12
+ * Time: 14:56
+ * To change this template use File | Settings | Editor | File and Code Templates
+ */
+
+//使用ReentrantLock和Condition来实现的等待/通知模型
+
+public class LoginServiceUseCondition {
+
+    private ReentrantLock lock = new ReentrantLock();
+    ConcurrentHashMap&lt;String, Result&gt; conditions = new ConcurrentHashMap&lt;&gt;();
+
+    public static void main(String[] args) throws InterruptedException {
+        LoginServiceUseCondition loginService = new LoginServiceUseCondition();
+        String uuid = UUID.randomUUID().toString();
+        System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 使用的UUID是:&quot; + uuid);
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        new Thread(() -&gt; {
+            loginService.login(uuid, 30_000);
+            countDownLatch.countDown();
+        }, &quot;登录线程&quot;).start();
+        Thread.sleep(5_000);
+        new Thread(() -&gt; {
+            try {
+                Thread.sleep(3_000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            loginService.confirm(uuid);
+            countDownLatch.countDown();
+        }, &quot;确认线程&quot;).start();
+        countDownLatch.await();
+        System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 两个线程都执行完毕了,退出&quot;);
+    }
+
+
+    /**
+     * 过了超时时间之后,锁会自动释放
+     *
+     * @param code
+     * @param timeout
+     */
+    public void login(String code, int timeout) {
+        assert code != null;
+        try {
+            lock.tryLock(timeout, TimeUnit.MILLISECONDS);
+            Condition condition = lock.newCondition();
+            Result result = new Result(&quot;超时&quot;, condition);
+            conditions.put(code, result);
+            System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] login()的请求开始阻塞&quot;);
+            condition.await();
+            System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 结束等待,继续执行,拿到的结果是&quot; + result.getMessage());
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+
+
+    }
+
+    //确认线程(拿这个UUID,去找到对应的Condition,唤醒上边的等待队列,并把Condition对象移除掉)
+
+    public void confirm(String code) {
+        assert code != null;
+        Result result = conditions.get(code);
+        Condition condition = result.getCondition();
+        if (condition != null) {
+            try {
+                System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 找到对应的Condition对象,将其等待队列中的线程唤醒&quot;);
+                lock.lock();
+                result.setMessage(&quot;成功&quot;);
+                condition.signal();
+                conditions.remove(code);
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+
+    class Result implements Serializable {
+        String message;
+        final Condition condition;
+
+        public Result(String message, Condition condition) {
+            this.message = message;
+            this.condition = condition;
+        }
+
+        public Result(Condition condition) {
+            this.condition = condition;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public Condition getCondition() {
+            return condition;
+        }
+    }
+
+}    
+</code></pre><p>上边的例子说明了怎么使用ReentrantLock和Condition来代替内置锁和wait(),notify(),notifyAll()</p>
+<p>下边的一个来自jdk中的例子,演示了如何使用同一个ReentrantLock上的多个等待队列的情况</p>
+<h3 id="来自JDK文档中的示例-我稍加改造-加上了main方法和一些日志"><a href="#来自JDK文档中的示例-我稍加改造-加上了main方法和一些日志" class="headerlink" title="来自JDK文档中的示例(我稍加改造,加上了main方法和一些日志):"></a>来自JDK文档中的示例(我稍加改造,加上了main方法和一些日志):</h3><pre><code>package com.jiaoyiping.baseproject.condition;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.IntStream;
+
+/**
+ * Created with Intellij IDEA
+ *
+ * @author: jiaoyiping
+ * Mail: jiaoyiping@gmail.com
+ * Date: 2019/04/12
+ * Time: 21:17
+ * To change this template use File | Settings | Editor | File and Code Templates
+ */
+
+public class BoundedBuffer {
+    final Lock lock = new ReentrantLock();
+    final Condition notFull = lock.newCondition();
+    final Condition notEmpty = lock.newCondition();
+
+    final Object[] items = new Object[10];
+    int putptr, takeptr, count;
+
+    public static void main(String[] args) throws InterruptedException {
+        BoundedBuffer boundedBuffer = new BoundedBuffer();
+        CountDownLatch countDownLatch = new CountDownLatch(40);
+        //分别启动20个put线程和20个take线程
+
+        IntStream.rangeClosed(1, 20).forEach(i -&gt; {
+            new Thread(() -&gt; {
+                try {
+                    boundedBuffer.put(new Object());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    countDownLatch.countDown();
+                }
+            }, &quot;put线程 - &quot; + i).start();
+        });
+
+        IntStream.rangeClosed(1, 20).forEach(i -&gt; {
+            new Thread(() -&gt; {
+                try {
+                    boundedBuffer.take();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    countDownLatch.countDown();
+                }
+            }, &quot;take线程-&quot; + i).start();
+        });
+
+        countDownLatch.await();
+        System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 所有线程都执行完毕,退出&quot;);
+    }
+
+    public void put(Object x) throws InterruptedException {
+        lock.lock();
+        try {
+            //put的线程,当队列满的时候挂起
+            while (count == items.length) {
+                System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 线程挂起&quot;);
+                notFull.await();
+            }
+            Thread.sleep(1_000);
+            items[putptr] = x;
+            if (++putptr == items.length) {
+                putptr = 0;
+            }
+            ++count;
+            System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 执行完毕写操作,唤醒take线程&quot;);
+            notEmpty.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Object take() throws InterruptedException {
+        lock.lock();
+        try {
+            //take的线程,当队列为空的时候,挂起
+            while (count == 0) {
+                System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 线程挂起&quot;);
+                notEmpty.await();
+            }
+            Thread.sleep(1_000);
+            Object x = items[takeptr];
+            if (++takeptr == items.length) {
+                takeptr = 0;
+            }
+            --count;
+            System.out.println(&quot;[&quot; + Thread.currentThread().getName() + &quot;] 执行完毕读操作,唤醒put线程&quot;);
+            notFull.signal();
+            return x;
+        } finally {
+            lock.unlock();
+        }
+    }
+}    
+</code></pre><p>我们看到,以上代码中,使用到了两个Condition:notFull和notEmpty,都是通过lock对象的newCondition()方法得来的</p>
+<p>items被放满之后,put的线程会在notFull的等待队列上进行等待(执行了notFull.await()方法) put线程执行完操作之后,会调用 notEmpty.signal()来试图唤醒在notEmpty上等待的线程(也就是给take线程发了一个信号,告诉它,items不是空的了,你可以过来take了)</p>
+<p>当item空了之后,take线程会在notEmpty的等待队列上进行等待(执行了notEmpty的await()方法) 当take线程执行完操作之后,会调用notFull.signal()来唤醒在notFull上等待的线程(也就是给put线程发一个信号,告诉它,items不满了,你可以进行put操作了)</p>
+<p></p><p style="color:red;font-size:25px">和内置方法类似,在调用await(),signal(),signalAll()等方法的时候,也必须要获得锁,也就是必须在 lock.lock()和lock.unlock()代码块儿之间才能调用这些方法,否则就会抛出IllegalMonitorStateException</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Inici</a></li>
+         
+          <li><a href="/about/">Qui som</a></li>
+         
+          <li><a href="/archives/">Articles</a></li>
+         
+          <li><a href="/projects_url">Projectes</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-5"><a class="toc-link" href="#使用ReentrantLock可以替代内置锁-当使用内置锁的时候-我们可以使用wait-nitify-和notifyAll-来控制线程之间的协作-那么-当我们使用ReentrantLock的时候-我们怎么来处理线程之间的写作呢"><span class="toc-number">1.</span> <span class="toc-text">使用ReentrantLock可以替代内置锁,当使用内置锁的时候,我们可以使用wait() nitify()和notifyAll()来控制线程之间的协作,那么,当我们使用ReentrantLock的时候,我们怎么来处理线程之间的写作呢?</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#JDK5-0为我们提供了Condition对象来替代内置锁的-wait-notify-和notifyAll-方法"><span class="toc-number">2.</span> <span class="toc-text">JDK5.0为我们提供了Condition对象来替代内置锁的 wait(),notify()和notifyAll()方法</span></a></li></ol><li class="toc-item toc-level-3"><a class="toc-link" href="#来自JDK文档中的示例-我稍加改造-加上了main方法和一些日志"><span class="toc-number"></span> <span class="toc-text">来自JDK文档中的示例(我稍加改造,加上了main方法和一些日志):</span></a>
+    </li></div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&text=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&title=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&is_video=false&description=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()&body=Check out this article: http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&title=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&title=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&title=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&title=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://yoursite.com/2019/04/12/使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()/&name=使用ReentrantLock和Condition来替代内置锁和wait(),notify(),notifyAll()&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menú</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Compartir</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Cap amunt</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2019 John Doe
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Inici</a></li>
+         
+          <li><a href="/about/">Qui som</a></li>
+         
+          <li><a href="/archives/">Articles</a></li>
+         
+          <li><a href="/projects_url">Projectes</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+<link rel="stylesheet" href="/lib/justified-gallery/css/justifiedGallery.min.css">
+
+    <!-- jquery -->
+<script src="/lib/jquery/jquery.min.js"></script>
+<script src="/lib/justified-gallery/js/jquery.justifiedGallery.min.js"></script>
+<script src="/js/main.js"></script>
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Disqus Comments -->
+
+
+</body>
+</html>
